@@ -1,11 +1,13 @@
 .{
-	.name = "websocket",
-	.version = "0.1.0",
-	.dependencies = .{},
-	.paths = .{
-		"readme.md",
-		"build.zig",
-		"build.zig.zon",
-		"src",
-	},
+    .name = "websocket",
+    .version = "0.1.0",
+    .dependencies = .{
+        .tls12 = .{ .url = "https://github.com/yuzudev/zig-tls12/archive/refs/heads/main.zip", .hash = "122079aad9eebc5945e207715c50722bbeca34e7b7a5876b3a322fad6468b28f2ed3" },
+    },
+    .paths = .{
+        "readme.md",
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
 }

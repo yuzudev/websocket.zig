@@ -8,7 +8,8 @@ const tls = std.crypto.tls;
 
 const Reader = proto.Reader;
 const Allocator = std.mem.Allocator;
-const Bundle = std.crypto.Certificate.Bundle;
+const Bundle = @import("tls12").Certificate.Bundle; //std.crypto.Certificate.Bundle;
+const TlsClient = @import("tls12").TlsClient; //tls.Client;
 
 fn ReadLoopHandler(comptime T: type) type {
     const info = @typeInfo(T);
@@ -66,7 +67,7 @@ pub const Client = struct {
     pub fn init(allocator: Allocator, config: Config) !Client {
         const net_stream = try net.tcpConnectToHost(allocator, config.host, config.port);
 
-        var tls_client: ?tls.Client = null;
+        var tls_client: ?TlsClient = null;
         if (config.tls) {
             var own_bundle = false;
             var bundle = config.ca_bundle orelse blk: {
@@ -78,7 +79,7 @@ pub const Client = struct {
             defer if (own_bundle) {
                 bundle.deinit(allocator);
             };
-            tls_client = try tls.Client.init(net_stream, bundle, config.host);
+            tls_client = try TlsClient.init(net_stream, bundle, config.host);
         }
         const stream = Stream.init(net_stream, tls_client);
 
@@ -334,12 +335,12 @@ pub const Client = struct {
     }
 };
 
-// wraps a net.Stream and optional a tls.Client
+// wraps a net.Stream and optional a TlsClient
 pub const Stream = struct {
     stream: net.Stream,
-    tls_client: ?tls.Client = null,
+    tls_client: ?TlsClient = null,
 
-    pub fn init(stream: net.Stream, tls_client: ?tls.Client) Stream {
+    pub fn init(stream: net.Stream, tls_client: ?TlsClient) Stream {
         return .{
             .stream = stream,
             .tls_client = tls_client,
@@ -348,7 +349,7 @@ pub const Stream = struct {
 
     pub fn close(self: *Stream) void {
         if (self.tls_client) |*tls_client| {
-            _ = tls_client.writeEnd(self.stream, "", true) catch {};
+            _ = tls_client.writeEnd(self.stream, "", true, .application_data) catch {};
         }
 
         // std.posix.close panics on EBADF
